@@ -176,7 +176,7 @@ export function Lesson({ mode, nav }: { mode: LearnMode; nav: Nav }) {
             <p>{cur.q.expl}</p>
             {!isCorrect && <p class="src">To pytanie wróci za ok. 10 pytań.</p>}
           </div>
-          <button class={`btn ${isCorrect ? 'btn-green' : 'btn-red'}`} onClick={goNext} autoFocus>
+          <button class={`btn ${isCorrect ? 'btn-green' : 'btn-red'}`} onClick={goNext}>
             {S.asked.length >= S.len ? 'Zakończ' : 'Dalej'}
           </button>
         </div>
