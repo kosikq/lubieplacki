@@ -25,9 +25,10 @@ export async function onboard(page: Page, name = 'Kuba', goal = '10') {
 
 /** Indeks poprawnej odpowiedzi dla pytania aktualnie na ekranie. */
 export async function currentCorrect(page: Page): Promise<{ id: string; correct: number }> {
-  const text = (await page.locator('.q-text').textContent())!.trim();
+  const text = (await page.locator('.q-text').first().textContent())!;
   return page.evaluate((t) => {
-    const q = (window as any).__cbzc.questions.find((x: any) => x.text === t);
+    const strip = (s: string) => s.replace(/[\s|]/g, '');
+    const q = (window as any).__cbzc.questions.find((x: any) => strip(x.text) === strip(t));
     return { id: q.id, correct: q.correct };
   }, text);
 }

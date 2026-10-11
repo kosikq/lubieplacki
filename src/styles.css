@@ -538,6 +538,65 @@ button.row:active {
   margin-bottom: 18px;
   overflow-wrap: anywhere;
 }
+.q-text.sm {
+  font-size: 17px;
+  margin-bottom: 0;
+}
+.q-text .q-p + .q-p,
+.q-text .q-code + .q-p,
+.q-text .q-table-wrap + .q-p {
+  margin-top: 10px;
+}
+.q-code {
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 4;
+  color: var(--label);
+}
+.q-table-wrap {
+  margin: 10px 0 0;
+  overflow-x: auto;
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.q-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+.q-table th,
+.q-table td {
+  padding: 7px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+.q-table th {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--label2);
+  background: var(--fill);
+}
+.q-table tr + tr td,
+.q-table tbody tr:first-child td {
+  border-top: 0.5px solid var(--sep);
+}
 .answers {
   display: flex;
   flex-direction: column;

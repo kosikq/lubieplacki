@@ -288,3 +288,39 @@ test('stan przetrwa przeładowanie; statystyki i osiągnięcia renderują się z
   await page.screenshot({ path: `${SHOTS}/53-home-data.png`, fullPage: true, animations: 'disabled' });
   expect(errors).toEqual([]);
 });
+
+test('pytania z tabelą SQL i kodem Python wyświetlają się czytelnie', async ({ page }) => {
+  const errors = watchErrors(page);
+  await onboard(page);
+  await page.locator('.tabbar').getByRole('button', { name: 'Pytania' }).click();
+  for (const [id, shot] of [['CBZC-221', 'sql'], ['CBZC-222', 'join'], ['CBZC-273', 'python']] as const) {
+    await page.getByRole('searchbox', { name: 'Szukaj' }).fill(id);
+    await page.locator('.q-row').first().click();
+    const dlg = page.getByRole('dialog');
+    await expect(dlg.locator('.q-code')).toHaveCount(1);
+    if (shot !== 'python') await expect(dlg.locator('.q-table').first()).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({ path: `${SHOTS}/60-q-${shot}.png`, animations: 'disabled' });
+    await page.getByRole('button', { name: 'Gotowe' }).click();
+  }
+  // wcięcia Pythona zachowane w DOM
+  await page.getByRole('searchbox', { name: 'Szukaj' }).fill('CBZC-274');
+  await page.locator('.q-row').first().click();
+  expect(await page.locator('.q-code').textContent()).toContain('    if i == 1:\n        continue');
+  // ten sam układ w lekcji (tryb ciemny)
+  await page.getByRole('button', { name: 'Gotowe' }).click();
+  await page.evaluate(() => (window as any).__cbzc.update((s: any) => { s.settings.theme = 'dark'; }));
+  await page.locator('.tabbar').getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: /Wybierz dział/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /Bazy danych i SQL/ }).click();
+  for (let i = 0; i < 10; i++) {
+    if (await page.locator('.overlay .q-table').count()) {
+      await page.screenshot({ path: `${SHOTS}/61-lesson-sql-dark.png`, animations: 'disabled' });
+      break;
+    }
+    const { correct } = await currentCorrect(page);
+    await answer(page, correct);
+    await page.getByRole('button', { name: i === 9 ? 'Zakończ' : 'Dalej', exact: true }).click();
+  }
+  expect(errors).toEqual([]);
+});

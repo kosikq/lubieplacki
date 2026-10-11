@@ -1,6 +1,30 @@
 import type { Question } from '../data/questions';
 import { LETTERS, LEVEL_NAMES, MODULES } from '../data/modules';
 import type { ComponentChildren } from 'preact';
+import { parseQuestionText } from '../core/qtext';
+
+/** Treść pytania z zachowaniem tabel i kodu. */
+export function QText({ text, class: cls }: { text: string; class?: string }) {
+  const blocks = parseQuestionText(text);
+  return (
+    <div class={cls} role="heading" aria-level={2}>
+      {blocks.map((b) =>
+        b.kind === 'text' ? (
+          <p class="q-p">{b.text}</p>
+        ) : b.kind === 'code' ? (
+          <pre class="q-code"><code>{b.text}</code></pre>
+        ) : (
+          <div class="q-table-wrap">
+            <table class="q-table">
+              <thead><tr>{b.head.map((h) => <th>{h}</th>)}</tr></thead>
+              <tbody>{b.rows.map((r) => <tr>{r.map((c) => <td>{c}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        ),
+      )}
+    </div>
+  );
+}
 
 export type TileState = 'idle' | 'selected' | 'correct' | 'wrong' | 'dim' | 'removed';
 
@@ -20,7 +44,7 @@ export function QuestionCard({ q, states, onPick, disabled, extraChip, animate }
         <span class="chip">{LEVEL_NAMES[q.level]}</span>
         {extraChip}
       </div>
-      <h2 class="q-text">{q.text}</h2>
+      <QText class="q-text" text={q.text} />
       <div class="answers" role="group" aria-label="Odpowiedzi">
         {q.options.map((o, i) => {
           const st = states[i];
@@ -52,7 +76,7 @@ export function QuestionReview({ q, chosen }: { q: Question; chosen?: number | n
         <span class="chip">{LEVEL_NAMES[q.level]}</span>
         <span class="chip">{q.id}</span>
       </div>
-      <p style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.35 }}>{q.text}</p>
+      <QText class="q-text sm" text={q.text} />
       <div class="opt-list">
         {q.options.map((o, i) => (
           <div class={`opt${i === q.correct ? ' correct' : chosen === i ? ' wrong' : ''}`}>
