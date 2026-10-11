@@ -150,7 +150,7 @@ export function recommendations(s: AppState): Recommendation[] {
     recs.push({
       tone: 'bad',
       title: `${w.m.short}: ${pct(w.acc!)} trafień`,
-      text: `${w.a.attempts} odpowiedzi, opanowane ${w.a.mastered}/${w.a.total}. Na egzaminie to ${w.m.weight} z 40 pytań — priorytet.`,
+      text: `${w.a.attempts} odpowiedzi, opanowane ${w.a.mastered}/${w.a.total} — priorytet.`,
     });
   }
 

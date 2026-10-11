@@ -53,7 +53,7 @@ export function Stats({ nav }: { nav: Nav }) {
                   <div style={{ fontSize: 20, fontWeight: 700, marginTop: 2 }}>
                     {pred.score >= EXAM_PASS + 5 ? 'Bezpiecznie powyżej progu' : pred.score >= EXAM_PASS ? 'Na granicy progu' : 'Poniżej progu'}
                   </div>
-                  <p class="muted" style={{ fontSize: 14, marginTop: 2 }}>Szacowana na podstawie skuteczności w każdym dziale i jego wagi na egzaminie (próg {EXAM_PASS}).</p>
+                  <p class="muted" style={{ fontSize: 14, marginTop: 2 }}>Szacowana na podstawie Twojej skuteczności w poszczególnych działach (próg {EXAM_PASS}).</p>
                 </>
               ) : (
                 <p class="muted" style={{ fontSize: 15, marginTop: 4 }}>Odpowiedz na co najmniej 30 pytań, żeby zobaczyć prognozę.</p>
@@ -208,9 +208,8 @@ function ModuleDetail({ mod }: { mod: number }) {
         <div class="card"><div class="num tnum">{pct(masteryPct(a))}</div><div class="lbl">opanowane ({a.mastered}/{a.total})</div></div>
         <div class="card"><div class="num tnum" style={{ color: accColor(acc(a)) }}>{pct(acc(a))}</div><div class="lbl">skuteczność ({a.attempts} odp.)</div></div>
       </div>
-      <p class="footnote" style={{ margin: '10px 4px' }}>Na egzaminie: {MODULES[mod].weight} z 40 pytań.</p>
       {topics.length > 1 && (
-        <div class="group">
+        <div class="group" style={{ marginTop: 12 }}>
           {topics.map((t) => (
             <div class="row">
               <div class="grow">

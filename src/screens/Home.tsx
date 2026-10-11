@@ -175,7 +175,7 @@ export function Home({ nav }: { nav: Nav }) {
               {focus.map((f) => (
                 <NavRow
                   icon={MODULES[f.mod].icon} color={MODULES[f.mod].color} title={MODULES[f.mod].short}
-                  sub={`Opanowane ${pct(masteryPct(f.agg))} (${f.agg.mastered}/${f.agg.total}) · ${f.agg.attempts ? `trafienia ${f.agg.correct}/${f.agg.attempts}` : 'jeszcze bez odpowiedzi'} · ${MODULES[f.mod].weight} pyt. na egzaminie`}
+                  sub={`Opanowane ${pct(masteryPct(f.agg))} (${f.agg.mastered}/${f.agg.total}) · ${f.agg.attempts ? `trafienia ${f.agg.correct}/${f.agg.attempts}` : 'jeszcze bez odpowiedzi'}`}
                   onClick={() => start({ kind: 'module', mod: f.mod })}
                 />
               ))}
