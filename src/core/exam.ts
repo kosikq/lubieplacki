@@ -12,18 +12,32 @@ export const EXAM_PASS = 25;
 export const EXAM_LIFELINES = 3;
 export const EXAM_HISTORY_MAX = 50;
 
-/** 40 unikalnych pytań, z każdego modułu tyle, ile wynosi jego waga. */
-export function drawExam(rng: Rng = defaultRng): string[] {
+/**
+ * 40 unikalnych pytań, z każdego modułu tyle, ile wynosi jego waga.
+ * Najpierw pytania, które jeszcze nie padły na egzaminie, potem te używane najrzadziej
+ * i najdawniej — dzięki temu ok. 6 kolejnych egzaminów nie powtarza żadnego pytania.
+ */
+export function drawExam(rng: Rng = defaultRng, use: AppState['examUse'] = {}): string[] {
   const ids: string[] = [];
   MODULES.forEach((m, i) => {
-    const pool = shuffle(QUESTIONS.filter((q) => q.mod === i), rng);
+    const pool = shuffle(QUESTIONS.filter((q) => q.mod === i), rng).sort((a, b) => {
+      const ua = use[a.id];
+      const ub = use[b.id];
+      return (ua?.count ?? 0) - (ub?.count ?? 0) || (ua?.last ?? 0) - (ub?.last ?? 0);
+    });
     ids.push(...pool.slice(0, m.weight).map((q) => q.id));
   });
   return shuffle(ids, rng);
 }
 
 export function startExam(s: AppState, now = Date.now(), rng: Rng = defaultRng): ActiveExam {
-  const ids = drawExam(rng);
+  const ids = drawExam(rng, s.examUse);
+  s.examDraws += 1;
+  for (const id of ids) {
+    const u = (s.examUse[id] ??= { count: 0, last: 0 });
+    u.count++;
+    u.last = s.examDraws;
+  }
   s.activeExam = {
     ids,
     answers: ids.map(() => null),

@@ -15,6 +15,14 @@ test('onboarding, dashboard i wszystkie zakładki bez błędów (jasny i ciemny)
   await page.getByRole('radio', { name: '20', exact: true }).click();
   await page.getByRole('button', { name: 'Zaczynamy' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Kuba');
+  // licznik dni do egzaminu 30.12.2026
+  const expectedDays = await page.evaluate(() => {
+    const d = new Date();
+    return Math.round((Date.UTC(2026, 11, 30) - Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+  });
+  await expect(page.locator('.countdown .cd-num b')).toHaveText(String(expectedDays));
+  await expect(page.locator('.countdown')).toContainText('30 grudnia 2026');
+  await expect(page.getByRole('region', { name: 'Egzamin' }).getByRole('heading', { name: 'Egzamin' })).toBeVisible();
 
   for (const theme of ['light', 'dark'] as const) {
     await page.evaluate((t) => (window as any).__cbzc.update((s: any) => { s.settings.theme = t; }), theme);
@@ -109,7 +117,7 @@ test('50/50 w nauce wyklucza dwie błędne odpowiedzi', async ({ page }) => {
 test('egzamin: 40 pytań, 50/50 x3, wznowienie po przeładowaniu, oddanie i wynik', async ({ page }) => {
   const errors = watchErrors(page);
   await onboard(page);
-  await page.getByRole('button', { name: /Egzamin próbny/ }).click();
+  await page.getByRole('button', { name: 'Rozpocznij egzamin' }).click();
   await page.screenshot({ path: `${SHOTS}/30-exam-intro.png`, animations: 'disabled' });
   await page.getByRole('button', { name: 'Rozpocznij egzamin' }).click();
   await expect(page.getByRole('timer')).toContainText(/39:5\d|40:00/);
@@ -138,8 +146,7 @@ test('egzamin: 40 pytań, 50/50 x3, wznowienie po przeładowaniu, oddanie i wyni
     if (i === 20) {
       // przeładowanie w trakcie: egzamin się wznawia
       await page.reload();
-      await expect(page.getByText(/Egzamin w toku/)).toBeVisible();
-      await page.getByText(/Egzamin w toku/).click();
+      await page.getByRole('button', { name: /Kontynuuj egzamin/ }).click();
       await expect(page.locator('.pill').filter({ hasText: '21/40' })).toBeVisible();
       await expect(page.locator('.answer.selected')).toHaveCount(1);
     }
@@ -169,7 +176,7 @@ test('egzamin: 40 pytań, 50/50 x3, wznowienie po przeładowaniu, oddanie i wyni
 
 test('egzamin kończy się automatycznie po upływie czasu (także po powrocie do aplikacji)', async ({ page }) => {
   await onboard(page);
-  await page.getByRole('button', { name: /Egzamin próbny/ }).click();
+  await page.getByRole('button', { name: 'Rozpocznij egzamin' }).click();
   await page.getByRole('button', { name: 'Rozpocznij egzamin' }).click();
   const { correct } = await currentCorrect(page);
   await answer(page, correct);
@@ -179,17 +186,20 @@ test('egzamin kończy się automatycznie po upływie czasu (także po powrocie d
   await expect(page.getByText('koniec czasu')).toBeVisible();
 
   // drugi przypadek: aplikacja zamknięta w trakcie, czas minął
+  const firstIds: string[] = await page.evaluate(() => (window as any).__cbzc.getState().exams[0].ids);
   await page.getByRole('button', { name: 'Nowy egzamin' }).click();
   await page.getByRole('button', { name: 'Rozpocznij egzamin' }).click();
   await page.getByRole('button', { name: 'Wyjdź z egzaminu' }).click();
   await page.getByRole('button', { name: 'Wróć później' }).click();
-  await expect(page.getByText(/Egzamin w toku/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Kontynuuj egzamin/ })).toBeVisible();
   await page.evaluate(() => (window as any).__cbzc.update((s: any) => { s.activeExam.startedAt -= 45 * 60_000; }));
   await page.reload();
   await expect(page.locator('.result-hero .score')).toBeVisible();
   const st = await page.evaluate(() => (window as any).__cbzc.getState());
   expect(st.exams.length).toBe(2);
   expect(st.exams[1].timedOut).toBe(true);
+  // drugi egzamin: zupełnie nowe pytania
+  expect(st.exams[1].ids.filter((id: string) => firstIds.includes(id))).toEqual([]);
 });
 
 test('powtórka błędów, wybór działu, przeglądarka pytań, ustawienia', async ({ page }) => {

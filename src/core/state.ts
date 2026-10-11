@@ -57,7 +57,7 @@ export interface Totals {
 export interface AppState {
   v: number;
   profile: { name: string; goal: number; createdAt: number } | null;
-  settings: { theme: 'system' | 'light' | 'dark'; sound: boolean; installHintDismissed: boolean };
+  settings: { theme: 'system' | 'light' | 'dark'; sound: boolean; installHintDismissed: boolean; examDate: string };
   n: number; // globalny licznik odpowiedzi w nauce (zegar algorytmu powtórek)
   sessionCounter: number;
   q: Record<string, QStat>;
@@ -70,11 +70,15 @@ export interface AppState {
   lifelineCooldown: number; // 50/50 w nauce: ile pytań do odnowienia
   exams: ExamRecord[];
   activeExam: ActiveExam | null;
+  /** Ile razy pytanie wylosowano na egzamin i w którym losowaniu ostatnio (żeby kolejne egzaminy miały nowe pytania). */
+  examUse: Record<string, { count: number; last: number }>;
+  examDraws: number;
   achievements: Record<string, number>; // id -> kiedy odblokowano
 }
 
 export const SCHEMA_VERSION = 1;
 export const RECENT_MAX = 60;
+export const DEFAULT_EXAM_DATE = '2026-12-30';
 
 export function emptyStat(): QStat {
   return { seen: 0, correct: 0, wrong: 0, streak: 0, lastCorrectSession: -1, lastSeen: -1, mastered: false, timeMs: 0, timed: 0 };
@@ -84,7 +88,7 @@ export function defaultState(): AppState {
   return {
     v: SCHEMA_VERSION,
     profile: null,
-    settings: { theme: 'system', sound: true, installHintDismissed: false },
+    settings: { theme: 'system', sound: true, installHintDismissed: false, examDate: DEFAULT_EXAM_DATE },
     n: 0,
     sessionCounter: 0,
     q: {},
@@ -100,6 +104,8 @@ export function defaultState(): AppState {
     lifelineCooldown: 0,
     exams: [],
     activeExam: null,
+    examUse: {},
+    examDraws: 0,
     achievements: {},
   };
 }
@@ -135,8 +141,22 @@ export function migrate(input: unknown): AppState {
     days: s.days && typeof s.days === 'object' ? s.days : {},
     exams: Array.isArray(s.exams) ? s.exams : [],
     achievements: s.achievements && typeof s.achievements === 'object' ? s.achievements : {},
+    examUse: s.examUse && typeof s.examUse === 'object' ? s.examUse : {},
+    examDraws: typeof s.examDraws === 'number' ? s.examDraws : 0,
     v: SCHEMA_VERSION,
   };
+  // starsze dane: odtwórz użycie pytań z historii egzaminów
+  if (!s.examUse && merged.exams.length) {
+    merged.exams.forEach((e, k) => {
+      for (const id of e.ids) {
+        const u = (merged.examUse[id] ??= { count: 0, last: 0 });
+        u.count++;
+        u.last = k + 1;
+      }
+    });
+    merged.examDraws = merged.exams.length;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(merged.settings.examDate)) merged.settings.examDate = DEFAULT_EXAM_DATE;
   for (const id of Object.keys(merged.q)) merged.q[id] = { ...emptyStat(), ...merged.q[id] };
   return merged;
 }

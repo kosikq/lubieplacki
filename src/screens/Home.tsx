@@ -1,11 +1,11 @@
 import { useState } from 'preact/hooks';
 import { update, useAppState } from '../core/store';
-import { dayKey } from '../core/dates';
+import { dayKey, daysBetween } from '../core/dates';
 import { displayStreak } from '../core/streak';
 import { levelInfo } from '../core/xp';
-import { byModule, focusAreas, masteryPct, overall, acc } from '../core/stats';
+import { byModule, focusAreas, masteryPct, overall } from '../core/stats';
 import { poolFor, type LearnMode } from '../core/learn';
-import { remainingMs } from '../core/exam';
+import { EXAM_PASS, remainingMs } from '../core/exam';
 import { MODULES } from '../data/modules';
 import { Bar, NavRow, Ring, Sheet, fmtDuration, pct, plural } from '../ui/common';
 import { IconShare } from '../ui/icons';
@@ -40,6 +40,14 @@ export function Home({ nav }: { nav: Nav }) {
 
   const start = (mode: LearnMode) => nav.go({ type: 'lesson', mode, key: ++lessonKey });
 
+  const examDays = daysBetween(today, s.settings.examDate);
+  const examDateLabel = new Date(`${s.settings.examDate}T12:00:00`).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
+  const toMaster = all.total - all.mastered;
+  const pace = examDays > 0 ? Math.ceil(toMaster / examDays) : 0;
+  const best = s.exams.length ? Math.max(...s.exams.map((e) => e.score)) : null;
+  const last = s.exams.length ? s.exams[s.exams.length - 1].score : null;
+  const exLeft = ex ? remainingMs(ex) : 0;
+
   const showInstall = isIOS() && !isStandalone() && !s.settings.installHintDismissed;
 
   return (
@@ -50,6 +58,26 @@ export function Home({ nav }: { nav: Nav }) {
           <h1>{greeting()}, {s.profile!.name}</h1>
         </header>
 
+        <section class="card countdown" aria-label="Odliczanie do egzaminu">
+          <div class="cd-num">
+            <b class="tnum">{Math.max(0, examDays)}</b>
+            <span>{examDays === 1 ? 'dzień' : 'dni'}</span>
+          </div>
+          <div class="cd-txt">
+            <div class="cd-k">📅 Do egzaminu CBZC</div>
+            <div class="cd-t">
+              {examDays > 0 ? examDateLabel : examDays === 0 ? 'Dziś egzamin — powodzenia! 🍀' : `Egzamin był ${examDateLabel}`}
+            </div>
+            {examDays > 0 && (
+              <div class="cd-s">
+                {toMaster > 0
+                  ? `Do opanowania ${toMaster} ${plural(toMaster, 'pytanie', 'pytania', 'pytań')} · ok. ${pace} dziennie`
+                  : 'Cały materiał opanowany 👑 — powtarzaj i rób egzaminy'}
+              </div>
+            )}
+          </div>
+        </section>
+
         {showInstall && (
           <div class="card install-card">
             <span class="icon-tile lg" style={{ background: 'var(--tint)' }}><IconShare size={22} /></span>
@@ -59,14 +87,6 @@ export function Home({ nav }: { nav: Nav }) {
             </div>
             <button class="icon-btn" aria-label="Ukryj" onClick={() => update((st) => { st.settings.installHintDismissed = true; })}>✕</button>
           </div>
-        )}
-
-        {ex && remainingMs(ex) > 0 && (
-          <button class="banner" style={{ width: '100%', textAlign: 'left' }} onClick={() => nav.go({ type: 'exam' })}>
-            <span>📝</span>
-            <span class="grow">Egzamin w toku · zostało {fmtDuration(remainingMs(ex))}</span>
-            <span>Wróć ›</span>
-          </button>
         )}
 
         <section class="card">
@@ -101,7 +121,7 @@ export function Home({ nav }: { nav: Nav }) {
           <button class="btn btn-primary cta" onClick={() => start({ kind: 'mixed' })}>Ucz się · 10 pytań</button>
         </section>
 
-        <div class="tiles">
+        <div class="tiles two">
           <button class="tile" onClick={() => mistakes && start({ kind: 'mistakes' })} disabled={!mistakes} style={{ opacity: mistakes ? 1 : 0.55 }}>
             <span class="icon-tile" style={{ background: 'var(--red)' }}>🔁</span>
             <span class="t-title">Powtórka błędów</span>
@@ -112,12 +132,28 @@ export function Home({ nav }: { nav: Nav }) {
             <span class="t-title">Wybierz dział</span>
             <span class="t-sub">12 działów</span>
           </button>
-          <button class="tile" onClick={() => nav.go(ex ? { type: 'exam' } : { type: 'examIntro' })}>
-            <span class="icon-tile" style={{ background: 'var(--orange)' }}>📝</span>
-            <span class="t-title">Egzamin próbny</span>
-            <span class="t-sub">{s.exams.length ? `Najlepszy: ${Math.max(...s.exams.map((e) => e.score))}/40` : '40 pytań · 40 min'}</span>
-          </button>
         </div>
+
+        <section class="card exam-panel" aria-label="Egzamin">
+          <div class="ep-head">
+            <span class="icon-tile lg" style={{ background: 'var(--orange)' }}>📝</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2>Egzamin</h2>
+              <p class="muted">40 pytań · 40 minut · próg {EXAM_PASS}/40 · 3× 50/50</p>
+            </div>
+          </div>
+          <div class="ep-stats">
+            <div><b class="tnum" style={{ color: best !== null ? (best >= EXAM_PASS ? 'var(--green)' : 'var(--red)') : undefined }}>{best ?? '—'}</b><span>najlepszy</span></div>
+            <div><b class="tnum">{last ?? '—'}</b><span>ostatni</span></div>
+            <div><b class="tnum">{s.exams.length}</b><span>podejścia</span></div>
+          </div>
+          {ex && exLeft > 0 ? (
+            <button class="btn btn-orange" onClick={() => nav.go({ type: 'exam' })}>Kontynuuj egzamin · {fmtDuration(exLeft)}</button>
+          ) : (
+            <button class="btn btn-orange" onClick={() => nav.go({ type: 'examIntro' })}>Rozpocznij egzamin</button>
+          )}
+          <p class="footnote" style={{ margin: '8px 2px 0', textAlign: 'center' }}>Każdy egzamin losuje pytania, których jeszcze nie było na poprzednich.</p>
+        </section>
 
         <div class="section-h">
           <h2>Opanowanie</h2>
@@ -139,7 +175,7 @@ export function Home({ nav }: { nav: Nav }) {
               {focus.map((f) => (
                 <NavRow
                   icon={MODULES[f.mod].icon} color={MODULES[f.mod].color} title={MODULES[f.mod].short}
-                  sub={`${pct(acc(f.agg))} trafień · ${f.agg.mastered}/${f.agg.total} opanowane · ${MODULES[f.mod].weight} pyt. na egzaminie`}
+                  sub={`Opanowane ${pct(masteryPct(f.agg))} (${f.agg.mastered}/${f.agg.total}) · ${f.agg.attempts ? `trafienia ${f.agg.correct}/${f.agg.attempts}` : 'jeszcze bez odpowiedzi'} · ${MODULES[f.mod].weight} pyt. na egzaminie`}
                   onClick={() => start({ kind: 'module', mod: f.mod })}
                 />
               ))}
@@ -169,7 +205,7 @@ export function Home({ nav }: { nav: Nav }) {
             {MODULES.map((m, i) => (
               <NavRow
                 icon={m.icon} color={m.color} title={m.title}
-                sub={`${mods[i].mastered}/${mods[i].total} opanowane · ${pct(acc(mods[i]))} trafień`}
+                sub={`Opanowane ${pct(masteryPct(mods[i]))} (${mods[i].mastered}/${mods[i].total})${mods[i].attempts ? ` · trafienia ${mods[i].correct}/${mods[i].attempts}` : ''}`}
                 onClick={() => {
                   setPickModule(false);
                   start({ kind: 'module', mod: i });

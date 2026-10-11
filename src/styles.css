@@ -947,6 +947,102 @@ button.row:active {
   color: var(--label2);
   margin-top: auto;
 }
+.tiles.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+.btn-orange {
+  background: var(--orange);
+  color: #fff;
+}
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cd-num {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+  background: var(--tint);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.cd-num b {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.cd-num span {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 3px;
+  opacity: 0.9;
+}
+.cd-txt {
+  min-width: 0;
+}
+.cd-k {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--label2);
+}
+.cd-t {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.cd-s {
+  font-size: 13px;
+  color: var(--label2);
+  margin-top: 3px;
+}
+.exam-panel {
+  margin-top: 12px;
+  border: 1.5px solid var(--orange-soft);
+}
+.ep-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ep-head h2 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.ep-head p {
+  font-size: 14px;
+  margin-top: 1px;
+}
+.ep-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 14px 0;
+  text-align: center;
+}
+.ep-stats > div {
+  background: var(--card2);
+  border-radius: 12px;
+  padding: 10px 4px;
+}
+.ep-stats b {
+  font-size: 22px;
+  font-weight: 700;
+  display: block;
+}
+.ep-stats span {
+  font-size: 12px;
+  color: var(--label2);
+}
 .mod-row .bar {
   margin-top: 6px;
 }
@@ -1376,6 +1472,17 @@ button.row:active {
 }
 .field:focus {
   box-shadow: 0 0 0 2px var(--tint);
+}
+.date-input {
+  border: 0;
+  background: var(--fill);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 17px;
+  color: var(--label);
+  min-height: 34px;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .label-sm {
   font-size: 13px;

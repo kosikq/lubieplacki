@@ -91,6 +91,30 @@ describe('egzamin', () => {
     }
   });
 
+  it('kolejne egzaminy losują nowe pytania: 6 egzaminów = 240 różnych pytań', () => {
+    const s = fresh();
+    const all: string[] = [];
+    for (let k = 0; k < 6; k++) {
+      const ex = startExam(s, k, seeded(100 + k));
+      all.push(...ex.ids);
+      s.activeExam = null; // także porzucony egzamin liczy się jako użyty
+    }
+    expect(new Set(all).size).toBe(240);
+    // 7. egzamin: powtórki tylko tam, gdzie pula działu się wyczerpała, i z najdawniej użytych
+    const ex7 = startExam(s, 7, seeded(7));
+    expect(new Set(ex7.ids).size).toBe(40);
+    for (const id of ex7.ids) expect(s.examUse[id].count).toBeLessThanOrEqual(2);
+    const fresh7 = ex7.ids.filter((id) => !all.includes(id)).length;
+    expect(fresh7).toBeGreaterThan(20);
+  });
+
+  it('migracja: użycie pytań odtworzone z historii egzaminów', () => {
+    const m = migrate({ exams: [{ at: 1, score: 30, total: 40, durationMs: 1, timedOut: false, lifelinesUsed: 0, ids: ['CBZC-001', 'CBZC-002'], answers: [0, 0] }] });
+    expect(m.examUse['CBZC-001']).toEqual({ count: 1, last: 1 });
+    expect(m.examDraws).toBe(1);
+    expect(m.settings.examDate).toBe('2026-12-30');
+  });
+
   it('timer liczony z czasu startu, 50/50 max 3, wynik i statystyki', () => {
     const s = fresh(10);
     const t0 = new Date(2026, 9, 11, 10).getTime();

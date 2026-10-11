@@ -23,6 +23,22 @@ export function Settings() {
           <NavRow icon="👤" color="var(--tint)" title="Imię" value={s.profile!.name} onClick={() => { setName(s.profile!.name); setEditName(true); }} />
         </div>
 
+        <div class="label-sm" style={{ marginTop: 24 }}>Egzamin</div>
+        <div class="group">
+          <label class="row with-icon">
+            <span class="icon-tile" style={{ background: 'var(--orange)' }}>📅</span>
+            <div class="grow"><div class="title">Data egzaminu</div></div>
+            <input
+              type="date" class="date-input" aria-label="Data egzaminu" value={s.settings.examDate}
+              onChange={(e) => {
+                const v = (e.target as HTMLInputElement).value;
+                if (/^\d{4}-\d{2}-\d{2}$/.test(v)) update((st) => { st.settings.examDate = v; });
+              }}
+            />
+          </label>
+        </div>
+        <p class="footnote">Na Starcie widać licznik dni do egzaminu i ile pytań dziennie trzeba opanować.</p>
+
         <div class="label-sm" style={{ marginTop: 24 }}>Cel dzienny</div>
         <div class="card" style={{ padding: 12 }}>
           <Segmented
